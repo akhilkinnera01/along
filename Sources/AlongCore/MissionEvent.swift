@@ -30,9 +30,8 @@ public enum MissionEventKind: Codable, Equatable, Sendable {
     case approvalResolved(ApprovalID, Bool)
     case agentTurnStarted(String)
     case agentTurnCompleted(String)
-    case agentTurnFailed(String)
+    case agentTurnFailed(RuntimeFailure)
     case toolStarted(String)
     case toolCompleted(String)
-    case toolFailed(String, String)
+    case toolFailed(String, RuntimeFailure)
 }
-

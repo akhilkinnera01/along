@@ -4,6 +4,8 @@ public enum AgentLoopError: Error, Equatable, Sendable {
     case missionQueued(position: Int)
     case missingTool(ToolName)
     case approvalDenied(ApprovalID)
+    case providerFailed
+    case toolFailed(ToolName)
 }
 
 public struct AgentTurnResult: Equatable, Sendable {
@@ -59,7 +61,7 @@ public actor AgentLoop {
             await scheduler.releaseForeground(missionID)
             return result
         } catch {
-            _ = try? await store.append(.agentTurnFailed(String(describing: error)), to: missionID, at: now())
+            _ = try? await store.append(.agentTurnFailed(Self.sanitizedFailure(from: error)), to: missionID, at: now())
             await scheduler.releaseForeground(missionID)
             throw error
         }
@@ -73,7 +75,13 @@ public actor AgentLoop {
             userInput: userInput,
             tools: await toolRegistry.descriptions()
         )
-        let response = try await modelProvider.respond(to: request)
+        let response: ModelResponse
+        do {
+            response = try await modelProvider.respond(to: request)
+        } catch {
+            throw AgentLoopError.providerFailed
+        }
+
         let context = ToolContext(missionID: missionID)
         var toolResults: [ToolResult] = []
 
@@ -108,12 +116,44 @@ public actor AgentLoop {
             }
 
             try await store.append(.toolStarted(call.name.rawValue), to: missionID, at: now())
-            let result = try await tool.run(arguments: call.arguments, context: context)
+            let result: ToolResult
+            do {
+                result = try await tool.run(arguments: call.arguments, context: context)
+            } catch {
+                try await store.append(
+                    .toolFailed(
+                        call.name.rawValue,
+                        RuntimeFailure(code: .toolFailed, message: "Tool execution failed.")
+                    ),
+                    to: missionID,
+                    at: now()
+                )
+                throw AgentLoopError.toolFailed(call.name)
+            }
             toolResults.append(result)
             try await store.append(.toolCompleted(call.name.rawValue), to: missionID, at: now())
         }
 
         try await store.append(.agentTurnCompleted(response.text), to: missionID, at: now())
         return AgentTurnResult(missionID: missionID, responseText: response.text, toolResults: toolResults)
+    }
+
+    private static func sanitizedFailure(from error: Error) -> RuntimeFailure {
+        guard let loopError = error as? AgentLoopError else {
+            return RuntimeFailure(code: .providerFailed, message: "Runtime turn failed.")
+        }
+
+        switch loopError {
+        case .missionQueued:
+            return RuntimeFailure(code: .missionQueued, message: "Mission was queued.")
+        case .missingTool:
+            return RuntimeFailure(code: .missingTool, message: "Required tool was unavailable.")
+        case .approvalDenied:
+            return RuntimeFailure(code: .approvalDenied, message: "User denied approval.")
+        case .providerFailed:
+            return RuntimeFailure(code: .providerFailed, message: "Model provider request failed.")
+        case .toolFailed:
+            return RuntimeFailure(code: .toolFailed, message: "Tool execution failed.")
+        }
     }
 }
