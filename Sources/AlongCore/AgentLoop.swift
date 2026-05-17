@@ -95,7 +95,11 @@ public actor AgentLoop {
                     id: idGenerator.nextApprovalID(),
                     missionID: missionID,
                     title: "Approve \(call.name.rawValue)",
-                    summary: tool.description.summary
+                    summary: tool.description.summary,
+                    risk: tool.description.safety.approvalRisk,
+                    options: [.approve, .deny],
+                    preview: call.arguments,
+                    expiresAt: nil
                 )
                 try await store.append(
                     .approvalRequested(approval.id, approval.title),

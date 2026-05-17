@@ -55,6 +55,15 @@ public enum ToolSafety: String, Codable, Equatable, Sendable {
             return true
         }
     }
+
+    public var approvalRisk: ApprovalRisk {
+        switch self {
+        case .readOnly, .localWrite:
+            return .low
+        case .externalWrite:
+            return .visibleToOthers
+        }
+    }
 }
 
 public struct ToolDescription: Equatable, Sendable {
@@ -207,17 +216,55 @@ public actor ToolRegistry {
     }
 }
 
+public enum ApprovalRisk: String, Codable, Equatable, Sendable {
+    case low
+    case visibleToOthers
+    case locationSharing
+    case destructive
+    case escalation
+}
+
+public struct ApprovalOption: Codable, Equatable, Sendable {
+    public let id: String
+    public let label: String
+
+    public init(id: String, label: String) {
+        self.id = id
+        self.label = label
+    }
+
+    public static let approve = ApprovalOption(id: "approve", label: "Approve")
+    public static let deny = ApprovalOption(id: "deny", label: "Deny")
+}
+
 public struct ApprovalRequest: Equatable, Sendable {
     public let id: ApprovalID
     public let missionID: MissionID
     public let title: String
     public let summary: String
+    public let risk: ApprovalRisk
+    public let options: [ApprovalOption]
+    public let preview: ToolArguments?
+    public let expiresAt: Date?
 
-    public init(id: ApprovalID = .unique(), missionID: MissionID, title: String, summary: String) {
+    public init(
+        id: ApprovalID = .unique(),
+        missionID: MissionID,
+        title: String,
+        summary: String,
+        risk: ApprovalRisk = .low,
+        options: [ApprovalOption] = [.approve, .deny],
+        preview: ToolArguments? = nil,
+        expiresAt: Date? = nil
+    ) {
         self.id = id
         self.missionID = missionID
         self.title = title
         self.summary = summary
+        self.risk = risk
+        self.options = options
+        self.preview = preview
+        self.expiresAt = expiresAt
     }
 }
 
