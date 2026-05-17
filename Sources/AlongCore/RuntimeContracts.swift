@@ -69,10 +69,69 @@ public struct ToolDescription: Equatable, Sendable {
     }
 }
 
-public struct ToolArguments: Equatable, Sendable {
-    public let values: [String: String]
+public enum ToolValue: Equatable, Sendable, Codable {
+    case string(String)
+    case bool(Bool)
+    case int(Int)
+    case double(Double)
+    case array([ToolValue])
+    case object([String: ToolValue])
+    case null
 
-    public init(_ values: [String: String] = [:]) {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        if container.decodeNil() {
+            self = .null
+        } else if let value = try? container.decode(Bool.self) {
+            self = .bool(value)
+        } else if let value = try? container.decode(Int.self) {
+            self = .int(value)
+        } else if let value = try? container.decode(Double.self) {
+            self = .double(value)
+        } else if let value = try? container.decode(String.self) {
+            self = .string(value)
+        } else if let value = try? container.decode([ToolValue].self) {
+            self = .array(value)
+        } else if let value = try? container.decode([String: ToolValue].self) {
+            self = .object(value)
+        } else {
+            throw DecodingError.typeMismatch(
+                ToolValue.self,
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Expected a JSON-compatible tool value."
+                )
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        switch self {
+        case .string(let value):
+            try container.encode(value)
+        case .bool(let value):
+            try container.encode(value)
+        case .int(let value):
+            try container.encode(value)
+        case .double(let value):
+            try container.encode(value)
+        case .array(let value):
+            try container.encode(value)
+        case .object(let value):
+            try container.encode(value)
+        case .null:
+            try container.encodeNil()
+        }
+    }
+}
+
+public struct ToolArguments: Codable, Equatable, Sendable {
+    public let values: [String: ToolValue]
+
+    public init(_ values: [String: ToolValue] = [:]) {
         self.values = values
     }
 }
