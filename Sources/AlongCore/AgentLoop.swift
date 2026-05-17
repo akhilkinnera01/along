@@ -2,6 +2,7 @@ import Foundation
 
 public enum AgentLoopError: Error, Equatable, Sendable {
     case missionQueued(position: Int)
+    case missionMonitoring(MissionID)
     case missingTool(ToolName)
     case approvalDenied(ApprovalID)
     case providerFailed
@@ -52,6 +53,8 @@ public actor AgentLoop {
         switch decision {
         case .granted, .alreadyForeground:
             break
+        case .monitoringContinues:
+            throw AgentLoopError.missionMonitoring(missionID)
         case .queued(let position):
             throw AgentLoopError.missionQueued(position: position)
         }
@@ -150,6 +153,8 @@ public actor AgentLoop {
         switch loopError {
         case .missionQueued:
             return RuntimeFailure(code: .missionQueued, message: "Mission was queued.")
+        case .missionMonitoring:
+            return RuntimeFailure(code: .missionMonitoring, message: "Mission is monitoring.")
         case .missingTool:
             return RuntimeFailure(code: .missingTool, message: "Required tool was unavailable.")
         case .approvalDenied:

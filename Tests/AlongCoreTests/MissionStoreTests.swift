@@ -32,6 +32,27 @@ func missionStoreCreatesMissionAndReplaysEvents() async throws {
 }
 
 @Test
+func missionStoreCreatesMissionWithExecutionRole() async throws {
+    let store = MissionStore()
+    let missionID = try #require(MissionID("mission-role"))
+    let snapshot = try await store.createMission(
+        id: missionID,
+        title: "Stay With Me",
+        template: .stayWithMe,
+        executionRole: .monitoring,
+        at: Date(timeIntervalSince1970: 0)
+    )
+    let event = try #require(try await store.events(for: missionID).first)
+
+    #expect(snapshot.executionRole == .monitoring)
+    if case .missionStarted(_, _, let executionRole) = event.kind {
+        #expect(executionRole == .monitoring)
+    } else {
+        Issue.record("Expected mission started event.")
+    }
+}
+
+@Test
 func missionStoreRejectsDuplicateMissionIDs() async throws {
     let store = MissionStore()
     let missionID = try #require(MissionID("mission-duplicate"))
@@ -52,7 +73,7 @@ func missionStoreReplaysValidEventHistory() throws {
             id: "event-1",
             missionID: missionID,
             sequence: 1,
-            kind: .missionStarted(template: .stayWithMe, title: "Stay With Me")
+            kind: .missionStarted(template: .stayWithMe, title: "Stay With Me", executionRole: .monitoring)
         ),
         try event(
             id: "event-2",
@@ -73,6 +94,7 @@ func missionStoreReplaysValidEventHistory() throws {
     #expect(snapshot.id == missionID)
     #expect(snapshot.title == "Stay With Me")
     #expect(snapshot.template == .stayWithMe)
+    #expect(snapshot.executionRole == .monitoring)
     #expect(snapshot.summary == "Waiting for check-in")
     #expect(snapshot.status == .monitoring)
     #expect(snapshot.lastSequence == 3)
@@ -111,7 +133,7 @@ func missionStoreRejectsReplayWithMixedMissionIDs() throws {
             id: "event-one",
             missionID: firstMissionID,
             sequence: 1,
-            kind: .missionStarted(template: .stayWithMe, title: "Stay With Me")
+            kind: .missionStarted(template: .stayWithMe, title: "Stay With Me", executionRole: .monitoring)
         ),
         try event(
             id: "event-two",
@@ -134,7 +156,7 @@ func missionStoreRejectsReplayWithSequenceGap() throws {
             id: "event-one",
             missionID: missionID,
             sequence: 1,
-            kind: .missionStarted(template: .stayWithMe, title: "Stay With Me")
+            kind: .missionStarted(template: .stayWithMe, title: "Stay With Me", executionRole: .monitoring)
         ),
         try event(
             id: "event-three",

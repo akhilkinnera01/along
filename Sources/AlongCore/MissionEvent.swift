@@ -37,7 +37,7 @@ public enum MissionEventType: String, Codable, Equatable, Sendable {
 }
 
 public enum MissionEventKind: Codable, Equatable, Sendable {
-    case missionStarted(template: MissionTemplateKind, title: String)
+    case missionStarted(template: MissionTemplateKind, title: String, executionRole: MissionExecutionRole)
     case statusChanged(MissionStatus)
     case summaryChanged(String)
     case approvalRequested(ApprovalID, String)
@@ -80,6 +80,7 @@ public enum MissionEventKind: Codable, Equatable, Sendable {
         case type
         case template
         case title
+        case executionRole
         case status
         case summary
         case approvalID
@@ -97,7 +98,8 @@ public enum MissionEventKind: Codable, Equatable, Sendable {
         case .missionStarted:
             self = .missionStarted(
                 template: try container.decode(MissionTemplateKind.self, forKey: .template),
-                title: try container.decode(String.self, forKey: .title)
+                title: try container.decode(String.self, forKey: .title),
+                executionRole: try container.decode(MissionExecutionRole.self, forKey: .executionRole)
             )
         case .statusChanged:
             self = .statusChanged(try container.decode(MissionStatus.self, forKey: .status))
@@ -136,9 +138,10 @@ public enum MissionEventKind: Codable, Equatable, Sendable {
         try container.encode(type, forKey: .type)
 
         switch self {
-        case .missionStarted(let template, let title):
+        case .missionStarted(let template, let title, let executionRole):
             try container.encode(template, forKey: .template)
             try container.encode(title, forKey: .title)
+            try container.encode(executionRole, forKey: .executionRole)
         case .statusChanged(let status):
             try container.encode(status, forKey: .status)
         case .summaryChanged(let summary):
