@@ -5,6 +5,13 @@ public enum MissionStoreError: Error, Equatable, Sendable {
     case missionNotFound(MissionID)
 }
 
+public enum MissionReplayError: Error, Equatable, Sendable {
+    case emptyHistory
+    case firstEventNotMissionStarted
+    case mixedMissionIDs(expected: MissionID, actual: MissionID)
+    case sequenceGap(expected: Int, actual: Int)
+}
+
 public actor MissionStore {
     private var records: [MissionID: MissionRecord]
     private let idGenerator: any IDGenerator
@@ -92,6 +99,48 @@ public actor MissionStore {
             throw MissionStoreError.missionNotFound(missionID)
         }
         return record.events
+    }
+
+    public static func replay(events: [MissionEvent]) throws -> MissionSnapshot {
+        guard let first = events.first else {
+            throw MissionReplayError.emptyHistory
+        }
+
+        guard case .missionStarted(let template, let title) = first.kind else {
+            throw MissionReplayError.firstEventNotMissionStarted
+        }
+
+        guard first.sequence == 1 else {
+            throw MissionReplayError.sequenceGap(expected: 1, actual: first.sequence)
+        }
+
+        var snapshot = MissionSnapshot(
+            id: first.missionID,
+            title: title,
+            template: template,
+            status: .working,
+            summary: "",
+            lastSequence: first.sequence,
+            lastEventID: first.id,
+            createdAt: first.occurredAt,
+            updatedAt: first.occurredAt
+        )
+
+        var expectedSequence = first.sequence
+        for event in events.dropFirst() {
+            guard event.missionID == first.missionID else {
+                throw MissionReplayError.mixedMissionIDs(expected: first.missionID, actual: event.missionID)
+            }
+
+            expectedSequence += 1
+            guard event.sequence == expectedSequence else {
+                throw MissionReplayError.sequenceGap(expected: expectedSequence, actual: event.sequence)
+            }
+
+            snapshot = MissionReducer.apply(event, to: snapshot)
+        }
+
+        return snapshot
     }
 }
 
