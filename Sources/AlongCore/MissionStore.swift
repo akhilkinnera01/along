@@ -7,32 +7,35 @@ public enum MissionStoreError: Error, Equatable, Sendable {
 
 public actor MissionStore {
     private var records: [MissionID: MissionRecord]
+    private let idGenerator: any IDGenerator
 
-    public init(records: [MissionID: MissionRecord] = [:]) {
+    public init(records: [MissionID: MissionRecord] = [:], idGenerator: any IDGenerator = UUIDIDGenerator()) {
         self.records = records
+        self.idGenerator = idGenerator
     }
 
     @discardableResult
     public func createMission(
-        id: MissionID = .unique(),
+        id: MissionID? = nil,
         title: String,
         template: MissionTemplateKind,
         at date: Date
     ) throws -> MissionSnapshot {
-        guard records[id] == nil else {
-            throw MissionStoreError.missionAlreadyExists(id)
+        let missionID = id ?? idGenerator.nextMissionID()
+        guard records[missionID] == nil else {
+            throw MissionStoreError.missionAlreadyExists(missionID)
         }
 
         let event = MissionEvent(
-            id: .unique(),
-            missionID: id,
+            id: idGenerator.nextMissionEventID(),
+            missionID: missionID,
             sequence: 1,
             kind: .missionStarted(template: template, title: title),
             occurredAt: date
         )
 
         let snapshot = MissionSnapshot(
-            id: id,
+            id: missionID,
             title: title,
             template: template,
             status: .working,
@@ -43,7 +46,7 @@ public actor MissionStore {
             updatedAt: date
         )
 
-        records[id] = MissionRecord(snapshot: snapshot, events: [event])
+        records[missionID] = MissionRecord(snapshot: snapshot, events: [event])
         return snapshot
     }
 
@@ -58,7 +61,7 @@ public actor MissionStore {
         }
 
         let event = MissionEvent(
-            id: .unique(),
+            id: idGenerator.nextMissionEventID(),
             missionID: missionID,
             sequence: record.snapshot.lastSequence + 1,
             kind: kind,
@@ -142,4 +145,3 @@ enum MissionReducer {
         return next
     }
 }
-

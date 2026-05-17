@@ -24,6 +24,7 @@ public actor AgentLoop {
     private let modelProvider: any ModelProvider
     private let toolRegistry: ToolRegistry
     private let approvalBroker: any ApprovalBroker
+    private let idGenerator: any IDGenerator
     private let now: @Sendable () -> Date
 
     public init(
@@ -32,6 +33,7 @@ public actor AgentLoop {
         modelProvider: any ModelProvider,
         toolRegistry: ToolRegistry,
         approvalBroker: any ApprovalBroker,
+        idGenerator: any IDGenerator = UUIDIDGenerator(),
         now: @escaping @Sendable () -> Date = Date.init
     ) {
         self.store = store
@@ -39,6 +41,7 @@ public actor AgentLoop {
         self.modelProvider = modelProvider
         self.toolRegistry = toolRegistry
         self.approvalBroker = approvalBroker
+        self.idGenerator = idGenerator
         self.now = now
     }
 
@@ -81,6 +84,7 @@ public actor AgentLoop {
 
             if tool.description.safety.requiresApproval {
                 let approval = ApprovalRequest(
+                    id: idGenerator.nextApprovalID(),
                     missionID: missionID,
                     title: "Approve \(call.name.rawValue)",
                     summary: tool.description.summary
