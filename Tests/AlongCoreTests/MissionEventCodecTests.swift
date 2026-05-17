@@ -13,6 +13,20 @@ func missionEventKindEncodesExplicitType() throws {
 }
 
 @Test
+func missionStartedEventEncodesExecutionRole() throws {
+    let kind = MissionEventKind.missionStarted(
+        template: .stayWithMe,
+        title: "Stay With Me",
+        executionRole: .monitoring
+    )
+    let data = try JSONEncoder().encode(kind)
+    let json = try #require(String(data: data, encoding: .utf8))
+
+    #expect(json.contains(#""type":"missionStarted""#))
+    #expect(json.contains(#""executionRole":"monitoring""#))
+}
+
+@Test
 func missionEventRoundTripsThroughJSON() throws {
     let missionID = try #require(MissionID("mission-codec"))
     let eventID = try #require(MissionEventID("event-codec"))
@@ -33,4 +47,3 @@ func missionEventRoundTripsThroughJSON() throws {
     #expect(decoded == event)
     #expect(decoded.kind.type == .toolFailed)
 }
-

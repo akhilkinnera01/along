@@ -1,5 +1,6 @@
 public enum RuntimeFailureCode: String, Codable, Equatable, Sendable {
     case missionQueued
+    case missionMonitoring
     case missingTool
     case approvalDenied
     case providerFailed
@@ -17,4 +18,3 @@ public struct RuntimeFailure: Codable, Equatable, Sendable {
         self.message = message
     }
 }
-

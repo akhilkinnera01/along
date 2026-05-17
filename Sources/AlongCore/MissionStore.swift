@@ -26,6 +26,7 @@ public actor MissionStore {
         id: MissionID? = nil,
         title: String,
         template: MissionTemplateKind,
+        executionRole: MissionExecutionRole = .foreground,
         at date: Date
     ) throws -> MissionSnapshot {
         let missionID = id ?? idGenerator.nextMissionID()
@@ -37,7 +38,7 @@ public actor MissionStore {
             id: idGenerator.nextMissionEventID(),
             missionID: missionID,
             sequence: 1,
-            kind: .missionStarted(template: template, title: title),
+            kind: .missionStarted(template: template, title: title, executionRole: executionRole),
             occurredAt: date
         )
 
@@ -45,6 +46,7 @@ public actor MissionStore {
             id: missionID,
             title: title,
             template: template,
+            executionRole: executionRole,
             status: .working,
             summary: "",
             lastSequence: event.sequence,
@@ -106,7 +108,7 @@ public actor MissionStore {
             throw MissionReplayError.emptyHistory
         }
 
-        guard case .missionStarted(let template, let title) = first.kind else {
+        guard case .missionStarted(let template, let title, let executionRole) = first.kind else {
             throw MissionReplayError.firstEventNotMissionStarted
         }
 
@@ -118,6 +120,7 @@ public actor MissionStore {
             id: first.missionID,
             title: title,
             template: template,
+            executionRole: executionRole,
             status: .working,
             summary: "",
             lastSequence: first.sequence,
@@ -162,9 +165,10 @@ enum MissionReducer {
         next.updatedAt = event.occurredAt
 
         switch event.kind {
-        case .missionStarted(let template, let title):
+        case .missionStarted(let template, let title, let executionRole):
             next.template = template
             next.title = title
+            next.executionRole = executionRole
             next.status = .working
         case .statusChanged(let status):
             next.status = status
