@@ -1,7 +1,7 @@
 ---
 name: Bug
 about: Track a reproducible defect
-title: "fix(scope): "
+title: ""
 labels: bug
 ---
 
@@ -20,4 +20,3 @@ Describe the correct behavior.
 ## Testing
 
 - 
-

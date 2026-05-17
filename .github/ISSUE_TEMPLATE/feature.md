@@ -1,7 +1,7 @@
 ---
 name: Feature
 about: Track a scoped product or engineering change
-title: "feat(scope): "
+title: ""
 labels: enhancement
 ---
 
@@ -20,4 +20,3 @@ Describe the outcome this issue should produce.
 ## Testing
 
 - 
-

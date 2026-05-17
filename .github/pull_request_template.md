@@ -16,5 +16,4 @@ Describe the approach and trade-offs.
 
 ## Issue
 
-Closes #
-
+Link the issue number.
