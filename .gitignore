@@ -1,0 +1,58 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Xcode local state
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcresult/
+
+# Build artifacts
+build/
+dist/
+*.ipa
+*.app.dSYM/
+*.dSYM/
+
+# Signing material and secrets
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.cer
+*.certSigningRequest
+*.pem
+*.key
+*.keystore
+*.jks
+*.env
+*.env.*
+!.env.example
+Secrets.plist
+Secrets.*.plist
+*Secrets*
+*.local
+
+# Editor and machine state
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Internal planning artifacts
+AGENTS.md
+CONTEXT.md
+notes/
+references/
+docs/adr/
+.aider*
+.cursor/
