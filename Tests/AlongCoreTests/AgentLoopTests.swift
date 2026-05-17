@@ -19,7 +19,7 @@ func agentLoopRequestsApprovalBeforeExternalToolRun() async throws {
     let provider = FixedProvider(
         response: ModelResponse(
             text: "Message ready.",
-            toolCalls: [ToolCall(name: sendMessage, arguments: ToolArguments(["body": "Running late"]))]
+            toolCalls: [ToolCall(name: sendMessage, arguments: ToolArguments(["body": .string("Running late")]))]
         )
     )
     let approvals = FixedApprovalBroker(approved: true)
