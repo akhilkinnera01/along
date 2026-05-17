@@ -51,6 +51,7 @@ Secrets.*.plist
 # Internal planning artifacts
 AGENTS.md
 CONTEXT.md
+DEVELOPMENT.md
 notes/
 references/
 docs/adr/
