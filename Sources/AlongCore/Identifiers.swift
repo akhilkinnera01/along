@@ -1,5 +1,27 @@
 import Foundation
 
+public protocol IDGenerator: Sendable {
+    func nextMissionID() -> MissionID
+    func nextMissionEventID() -> MissionEventID
+    func nextApprovalID() -> ApprovalID
+}
+
+public struct UUIDIDGenerator: IDGenerator {
+    public init() {}
+
+    public func nextMissionID() -> MissionID {
+        .unique()
+    }
+
+    public func nextMissionEventID() -> MissionEventID {
+        .unique()
+    }
+
+    public func nextApprovalID() -> ApprovalID {
+        .unique()
+    }
+}
+
 public struct MissionID: Hashable, Codable, Sendable, CustomStringConvertible {
     public let rawValue: String
 
@@ -71,4 +93,3 @@ public struct ApprovalID: Hashable, Codable, Sendable, CustomStringConvertible {
         self.rawValue = rawValue
     }
 }
-
